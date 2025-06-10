@@ -2,6 +2,8 @@ import { NextResponse } from "next/server"
 import { db, trails, timeSlots } from "@/lib/db"
 import { sql } from "drizzle-orm"
 
+export const dynamic = "force-static"
+
 export async function GET() {
   try {
     // Create tables if they don't exist
@@ -79,16 +81,39 @@ export async function GET() {
 
     // If empty, seed with initial data
     if (existingTrails.length === 0) {
-      await db.insert(trails).values([
+      interface TrailData {
+        id: string;
+        name: string;
+        duration: string;
+        distance: string;
+        difficulty: string;
+        price: string;
+        description: string;
+        maxRiders: number;
+        image: string;
+        highlights: string[];
+        requirements: string[];
+        active: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+      }
+
+      const trailValues: TrailData[] = [
         {
           id: "beginner",
           name: "Beginner Trail",
           duration: "1 Hour",
           distance: "2 Miles",
           difficulty: "Easy",
-          price: 45,
+          price: '45.00',
           description: "Perfect for first-time riders and families. Gentle terrain with beautiful meadow views.",
           maxRiders: 8,
+          image: "/images/trails/beginner.jpg",
+          highlights: ["Easy terrain", "Family friendly", "Scenic views"],
+          requirements: ["No experience needed", "Minimum age: 8 years"],
+          active: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
         },
         {
           id: "vista",
@@ -96,9 +121,15 @@ export async function GET() {
           duration: "2 Hours",
           distance: "4 Miles",
           difficulty: "Moderate",
-          price: 75,
+          price: '75.00',
           description: "Our most popular trail featuring stunning mountain vistas and diverse wildlife.",
           maxRiders: 6,
+          image: "/images/trails/vista.jpg",
+          highlights: ["Mountain views", "Wildlife spotting", "Varied terrain"],
+          requirements: ["Basic riding experience", "Minimum age: 12 years"],
+          active: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
         },
         {
           id: "advanced",
@@ -106,11 +137,21 @@ export async function GET() {
           duration: "3 Hours",
           distance: "6 Miles",
           difficulty: "Challenging",
-          price: 95,
+          price: '95.00',
           description: "For experienced riders seeking adventure on challenging mountain terrain.",
           maxRiders: 4,
-        },
-      ])
+          image: "/images/trails/advanced.jpg",
+          highlights: ["Challenging terrain", "Advanced trails", "Panoramic views"],
+          requirements: ["Experienced riders only", "Minimum age: 16 years"],
+          active: true,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        }
+      ];
+      
+      for (const trail of trailValues) {
+        await db.insert(trails).values(trail);
+      }
     }
 
     // Check if time slots table is empty
@@ -118,13 +159,29 @@ export async function GET() {
 
     // If empty, seed with initial data
     if (existingTimeSlots.length === 0) {
-      await db.insert(timeSlots).values([
-        { time: "8:00 AM", maxCapacity: 8 },
-        { time: "10:00 AM", maxCapacity: 8 },
-        { time: "12:00 PM", maxCapacity: 8 },
-        { time: "2:00 PM", maxCapacity: 8 },
-        { time: "4:00 PM", maxCapacity: 8 },
-      ])
+      interface TimeSlotData {
+        time: string;
+        maxCapacity: number;
+        trailId: string;
+        active: boolean;
+      }
+
+      const timeSlotValues: TimeSlotData[] = [
+        { time: "8:00 AM", maxCapacity: 8, trailId: "beginner", active: true },
+        { time: "10:00 AM", maxCapacity: 8, trailId: "beginner", active: true },
+        { time: "12:00 PM", maxCapacity: 8, trailId: "vista", active: true },
+        { time: "2:00 PM", maxCapacity: 8, trailId: "vista", active: true },
+        { time: "4:00 PM", maxCapacity: 8, trailId: "advanced", active: true },
+      ];
+      
+      for (const slot of timeSlotValues) {
+        await db.insert(timeSlots).values({
+          time: slot.time,
+          maxCapacity: slot.maxCapacity,
+          trailId: slot.trailId,
+          active: slot.active
+        });
+      }
     }
 
     return NextResponse.json({

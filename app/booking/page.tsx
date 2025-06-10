@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Clock, Users, DollarSign, CheckCircle, AlertCircle, ArrowLeft, Menu, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { generateSignature } from "../util/helper"
 
 interface Trail {
   id: string
@@ -115,7 +116,7 @@ export default function BookingPage() {
       },
     ])
 
-    setTimeSlots([
+    setTimeSlots([ // pull the data from the database
       { time: "8:00 AM", available: true, spotsLeft: 6 },
       { time: "10:00 AM", available: true, spotsLeft: 3 },
       { time: "12:00 PM", available: true, spotsLeft: 8 },
@@ -213,34 +214,55 @@ export default function BookingPage() {
 
       const booking = await bookingResponse.json()
 
-      // Save booking ID to localStorage for retrieval after payment
+      // Save booking ID to localStorage for retrieval after payment 
       localStorage.setItem("lastBookingId", booking.id)
 
-      // Create PayFast payment data
-      const paymentData = {
-        merchant_id: process.env.NEXT_PUBLIC_PAYFAST_MERCHANT_ID,
-        merchant_key: process.env.NEXT_PUBLIC_PAYFAST_MERCHANT_KEY,
+      // Create PayFast payment data with all required fields
+      const paymentData: Record<string, string> = {
+        // Required fields
+        merchant_id: '10000100',
+        merchant_key: '46f0cd694581a',
         return_url: `${window.location.origin}/booking/success`,
         cancel_url: `${window.location.origin}/booking/cancel`,
         notify_url: `${window.location.origin}/api/payfast/notify`,
-        name_first: bookingData.customerInfo.name.split(" ")[0],
-        name_last: bookingData.customerInfo.name.split(" ").slice(1).join(" "),
-        email_address: bookingData.customerInfo.email,
-        cell_number: bookingData.customerInfo.phone,
-        amount: bookingData.totalPrice.toFixed(2),
-        item_name: `${selectedTrail?.name} - ${numRiders} rider(s)`,
-        item_description: `Trail ride on ${new Date(selectedDate).toLocaleDateString()} at ${selectedTime}`,
-        custom_str1: JSON.stringify({
-          bookingData,
-          trailId: selectedTrail?.id,
-          date: selectedDate,
-          time: selectedTime,
-          riders: numRiders,
-        }),
+        
+        // Customer information
+        name_first: (bookingData.customerInfo.name.split(" ")[0] || '').substring(0, 100),
+        name_last: (bookingData.customerInfo.name.split(" ").slice(1).join(" ") || '').substring(0, 100),
+        email_address: (bookingData.customerInfo.email || '').substring(0, 100),
+        cell_number: (bookingData.customerInfo.phone || '').substring(0, 20),
+        
+        // Payment details
+        amount: parseFloat(bookingData.totalPrice.toFixed(2)).toFixed(2),
+        item_name: `${selectedTrail?.name} - ${numRiders} rider(s)`.substring(0, 100),
+        item_description: `Trail ride on ${new Date(selectedDate).toLocaleDateString()} at ${selectedTime}`.substring(0, 255),
+        
+        // Custom data
+        custom_str1: `booking_ref:${booking.id}`,
         custom_str2: booking.id,
-        payment_method: "cc",
-      }
+        
+        // Payment method (optional)
+        payment_method: 'cc',
+        
+        // Additional recommended fields
+        m_payment_id: booking.id,
+        email_confirmation: '1',
+        confirmation_address: 'allison@mountainviewhorsetrails.co.za',
+        
+        // Set to 1 for testing in sandbox
+        testmode: process.env.NODE_ENV === 'production' ? '0' : '1'
+      };
+      
+      // Remove any empty values as they can cause signature issues
+      Object.keys(paymentData).forEach(key => {
+        if (paymentData[key] === undefined || paymentData[key] === '') {
+          delete paymentData[key];
+        }
+      });
 
+      // Log payment data for debugging
+      console.log('Payment data being sent for signature:', JSON.stringify(paymentData, null, 2));
+      
       // Generate signature using server-side API
       const signatureResponse = await fetch("/api/payfast/generate-signature", {
         method: "POST",
@@ -256,6 +278,16 @@ export default function BookingPage() {
 
       const signatureData = await signatureResponse.json()
       const signature = signatureData.signature
+      
+      // Log the generated signature
+      console.log('Generated signature:', signature);
+      
+      // Log the data that will be sent to PayFast
+      const formData = {
+        ...paymentData,
+        signature: signature
+      };
+      console.log('Complete form data being sent to PayFast:', JSON.stringify(formData, null, 2));
 
       // Create PayFast form and submit
       const form = document.createElement("form")
@@ -276,7 +308,7 @@ export default function BookingPage() {
         }
       })
 
-      // Add signature
+      // Add signature input using the server-generated signature
       const signatureInput = document.createElement("input")
       signatureInput.type = "hidden"
       signatureInput.name = "signature"
