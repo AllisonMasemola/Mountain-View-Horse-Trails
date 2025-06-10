@@ -1,0 +1,10 @@
+{
+  "version": "0000_initial_migration",
+  "migrations": [
+    {
+      "id": 1,
+      "checksum": "0000_initial_migration",
+      "finished_at": "2025-06-10T17:00:00.000Z"
+    }
+  ]
+}
