@@ -1,11 +1,6 @@
-import { db, poolConnection } from './db/connection'
-import { mysqlTable, serial, text, varchar, timestamp, int, boolean, json, decimal } from "drizzle-orm/mysql-core"
-// import mysql from 'mysql2/promise'
-// import { drizzle } from "drizzle-orm/mysql-core"
-// import drizle from 'drizzle-orm'
+import { mysqlTable, serial, text, timestamp, int, decimal, boolean, json } from "drizzle-orm/mysql-core"
 
-// Initialize MySQL connection pool
-const pool = poolConnection
+export * from './db/connection';
 
 // Define schema
 export const bookings = mysqlTable("bookings", {
@@ -55,6 +50,9 @@ export const trails = mysqlTable("trails", {
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   description: text("description").notNull(),
   maxRiders: int("max_riders").notNull(),
+  image: text("image").notNull(),
+  highlights: json("highlights").notNull(),
+  requirements: json("requirements").notNull(),
   active: boolean("active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -62,6 +60,7 @@ export const trails = mysqlTable("trails", {
 
 export const timeSlots = mysqlTable("time_slots", {
   id: serial("id").primaryKey(),
+  trailId: text("trail_id").notNull(),
   time: text("time").notNull(),
   maxCapacity: int("max_capacity").notNull(),
   active: boolean("active").default(true),

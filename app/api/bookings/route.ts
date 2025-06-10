@@ -4,6 +4,8 @@ import { db } from "@/lib/db/connection"
 // import { eq } from "drizzle-orm"
 // import { sql } from "drizzle-orm/mysql-core"
 
+export const dynamic = "force-static"
+
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
