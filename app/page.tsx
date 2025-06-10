@@ -572,7 +572,7 @@ export default function HomePage() {
                 </p>
                 <Link href="/booking">
                   <Button className="w-full bg-[rgb(120,53,15)] hover:bg-[rgb(100,43,12)] py-3 text-lg text-stone-100">
-                    Open Booking System
+                    Book Now
                   </Button>
                 </Link>
               </div>
