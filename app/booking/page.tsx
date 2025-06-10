@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Clock, Users, DollarSign, CheckCircle, AlertCircle, ArrowLeft, Menu, X } from "lucide-react"
 import Link from "next/link"
 import Image from "next/image"
+import { generateSignature } from "../util/helper"
 
 interface Trail {
   id: string
@@ -115,7 +116,7 @@ export default function BookingPage() {
       },
     ])
 
-    setTimeSlots([
+    setTimeSlots([ // pull the data from the database
       { time: "8:00 AM", available: true, spotsLeft: 6 },
       { time: "10:00 AM", available: true, spotsLeft: 3 },
       { time: "12:00 PM", available: true, spotsLeft: 8 },
@@ -213,13 +214,16 @@ export default function BookingPage() {
 
       const booking = await bookingResponse.json()
 
-      // Save booking ID to localStorage for retrieval after payment
+      // Save booking ID to localStorage for retrieval after payment 
       localStorage.setItem("lastBookingId", booking.id)
 
       // Create PayFast payment data
       const paymentData = {
-        merchant_id: process.env.NEXT_PUBLIC_PAYFAST_MERCHANT_ID,
-        merchant_key: process.env.NEXT_PUBLIC_PAYFAST_MERCHANT_KEY,
+        // merchant_id: process.env.NEXT_PUBLIC_PAYFAST_MERCHANT_ID,
+        // merchant_key: process.env.NEXT_PUBLIC_PAYFAST_MERCHANT_KEY,
+        merchant_id: '10000100',
+        merchant_key: '46f0cd694581a',
+        // passphrase: 'jt7NOE43FZPn',
         return_url: `${window.location.origin}/booking/success`,
         cancel_url: `${window.location.origin}/booking/cancel`,
         notify_url: `${window.location.origin}/api/payfast/notify`,
@@ -230,13 +234,14 @@ export default function BookingPage() {
         amount: bookingData.totalPrice.toFixed(2),
         item_name: `${selectedTrail?.name} - ${numRiders} rider(s)`,
         item_description: `Trail ride on ${new Date(selectedDate).toLocaleDateString()} at ${selectedTime}`,
-        custom_str1: JSON.stringify({
-          bookingData,
-          trailId: selectedTrail?.id,
-          date: selectedDate,
-          time: selectedTime,
-          riders: numRiders,
-        }),
+        // custom_str1: JSON.stringify({
+        //   bookingData,
+        //   trailId: selectedTrail?.id,
+        //   date: selectedDate,
+        //   time: selectedTime,
+        //   riders: numRiders,
+        // }),
+        custom_str1: `booking_ref:${booking.id}`,
         custom_str2: booking.id,
         payment_method: "cc",
       }
@@ -276,11 +281,12 @@ export default function BookingPage() {
         }
       })
 
+      const signatureInput = generateSignature(paymentData, signature)
       // Add signature
-      const signatureInput = document.createElement("input")
-      signatureInput.type = "hidden"
-      signatureInput.name = "signature"
-      signatureInput.value = signature
+      // const signatureInput = document.createElement("input")
+      // signatureInput.type = "hidden"
+      // signatureInput.name = "signature"
+      // signatureInput.value = signature
       form.appendChild(signatureInput)
 
       document.body.appendChild(form)

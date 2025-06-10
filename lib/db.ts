@@ -1,24 +1,20 @@
-import mysql from 'mysql2/promise'
-import { drizzle } from "drizzle-orm/mysql-core"
-import { mysqlTable, serial, varchar, timestamp, int, boolean, json, decimal } from "drizzle-orm/mysql-core"
+import { db, poolConnection } from './db/connection'
+import { mysqlTable, serial, text, varchar, timestamp, int, boolean, json, decimal } from "drizzle-orm/mysql-core"
+// import mysql from 'mysql2/promise'
+// import { drizzle } from "drizzle-orm/mysql-core"
+// import drizle from 'drizzle-orm'
 
 // Initialize MySQL connection pool
-const pool = mysql.createPool(process.env.DATABASE_URL || {
-  host: 'localhost',
-  user: 'username',
-  password: 'password',
-  database: 'mountain_view_db',
-  port: 3306
-})
+const pool = poolConnection
 
 // Define schema
 export const bookings = mysqlTable("bookings", {
-  id: text("id").primaryKey(),
+  id: int("id").primaryKey(),
   trailId: text("trail_id").notNull(),
   trailName: text("trail_name").notNull(),
   date: text("date").notNull(),
   time: text("time").notNull(),
-  riders: integer("riders").notNull(),
+  riders: int("riders").notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default("pending"),
   paymentId: text("payment_id"),
@@ -29,7 +25,7 @@ export const bookings = mysqlTable("bookings", {
   paidAt: timestamp("paid_at"),
 })
 
-export const customers = pgTable("customers", {
+export const customers = mysqlTable("customers", {
   id: serial("id").primaryKey(),
   bookingId: text("booking_id").notNull(),
   name: text("name").notNull(),
@@ -40,17 +36,17 @@ export const customers = pgTable("customers", {
   createdAt: timestamp("created_at").defaultNow(),
 })
 
-export const riders = pgTable("riders", {
+export const riders = mysqlTable("riders", {
   id: serial("id").primaryKey(),
   bookingId: text("booking_id").notNull(),
   name: text("name").notNull(),
-  age: integer("age").notNull(),
-  weight: integer("weight").notNull(),
+  age: int("age").notNull(),
+  weight: int("weight").notNull(),
   experience: text("experience").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 })
 
-export const trails = pgTable("trails", {
+export const trails = mysqlTable("trails", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   duration: text("duration").notNull(),
@@ -58,20 +54,20 @@ export const trails = pgTable("trails", {
   difficulty: text("difficulty").notNull(),
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
   description: text("description").notNull(),
-  maxRiders: integer("max_riders").notNull(),
+  maxRiders: int("max_riders").notNull(),
   active: boolean("active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export const timeSlots = pgTable("time_slots", {
+export const timeSlots = mysqlTable("time_slots", {
   id: serial("id").primaryKey(),
   time: text("time").notNull(),
-  maxCapacity: integer("max_capacity").notNull(),
+  maxCapacity: int("max_capacity").notNull(),
   active: boolean("active").default(true),
 })
 
-export const bookingLogs = pgTable("booking_logs", {
+export const bookingLogs = mysqlTable("booking_logs", {
   id: serial("id").primaryKey(),
   bookingId: text("booking_id").notNull(),
   action: text("action").notNull(),
@@ -80,4 +76,4 @@ export const bookingLogs = pgTable("booking_logs", {
 })
 
 // Initialize Drizzle ORM
-export const db = drizzle(pool)
+// export const db = drizzle(pool)

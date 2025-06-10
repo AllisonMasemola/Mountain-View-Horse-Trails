@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
+import { db } from "@/lib/db/connection"
 // import { db, bookings, customers, riders, bookingLogs } from "@/lib/db"
 // import { eq } from "drizzle-orm"
 // import { sql } from "drizzle-orm/mysql-core"
